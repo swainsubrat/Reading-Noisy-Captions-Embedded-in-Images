@@ -52,11 +52,12 @@ def pad_and_append(captions: pd.Series, max_caption_length: int) -> pd.Series:
     
     return padded_captions
 
-def encoded_captions(padded_captions,caption_lengths,word_map):
+def encoded_captions(captions,caption_lengths,word_map, max_caption_length):
     enc_captions = []
-    for i,caption in enumerate(padded_captions):
-        enc_caption = [word_map['<start>']] + [word_map.get(word, word_map['<unk>']) for word in caption] + [
-                        word_map['<end>']] + [word_map['<pad>']] * (max_len - caption_lengths[i])
+    for i,caption in enumerate(captions):
+        enc_caption = [word_map['<start>']] + [word_map.get(word, word_map['<unk>']) for word in caption.split()] + [
+                        word_map['<end>']] + [word_map['<pad>']] * (max_caption_length - caption_lengths[i])
+
         enc_captions.append(enc_caption)
     return enc_captions
 
@@ -157,13 +158,13 @@ def accuracy(scores, targets, k):
     return correct_total.item() * (100.0 / batch_size)
 
 if __name__ == "__main__":
-    df: pd.DataFrame    = pd.read_csv(caption_path ,names=["filenames", "captions"], sep='\t', header=None)
-    captions: pd.Series = df["captions"][:1000]
+    df: pd.DataFrame    = pd.read_csv(caption_path ,names=["filenames", "captions"], sep='\t', header=None).head(10)
+    captions: pd.Series = df["captions"]
     image_filenames     = df["filenames"].to_list()
 
     max_caption_length, caption_lengths, word_map = get_word_map(captions)
-    padded_captions = pad_and_append(captions, max_caption_length)
-    encoded_caption = encoded_captions(padded_captions, caption_lengths, word_map)
+    # padded_captions = pad_and_append(captions, max_caption_length)
+    encoded_caption = encoded_captions(captions, caption_lengths, word_map, max_caption_length)
 
     _dict = {
         "max_caption_length": max_caption_length,

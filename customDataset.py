@@ -7,6 +7,8 @@ import pickle
 from torchvision import transforms as T
 from PIL import Image
 
+from skimage import transform
+
 from utils import load
 
 class ImageAndCaptionsDataset(Dataset):
@@ -29,7 +31,9 @@ class ImageAndCaptionsDataset(Dataset):
         image_path = os.path.join(self.image_path,self.image_filenames[idx])
         image = Image.open(image_path).convert("RGB")
         image = np.array(image)
-        image=T.ToTensor()(image)
+        image = transform.resize(image, (256, 256))
+        image = T.ToTensor()(image)
+        image = image.float()
 
         # "TODO": Sweta: what is this self.transform function
         # if self.transform is not None:
@@ -49,7 +53,7 @@ class ImageAndCaptionsDataset(Dataset):
 if __name__ == "__main__":
     ic_dataset = ImageAndCaptionsDataset()
     data_loader_test = torch.utils.data.DataLoader(
-        ic_dataset, batch_size=1, shuffle=False, num_workers=4,
+        ic_dataset, batch_size=5, shuffle=False, num_workers=4,
         collate_fn=None)
 
     for i, (imgs, caps, caplens) in enumerate(data_loader_test):
