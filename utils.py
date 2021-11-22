@@ -157,8 +157,8 @@ def accuracy(scores, targets, k):
     return correct_total.item() * (100.0 / batch_size)
 
 if __name__ == "__main__":
-    df: pd.DataFrame    = pd.read_csv(caption_path ,names=["filenames", "captions"], sep='\t', header=None).head(50)
-    captions: pd.Series = df["captions"][:10]
+    df: pd.DataFrame    = pd.read_csv(caption_path ,names=["filenames", "captions"], sep='\t', header=None)
+    captions: pd.Series = df["captions"][:1000]
     image_filenames     = df["filenames"].to_list()
 
     max_caption_length, caption_lengths, word_map = get_word_map(captions)

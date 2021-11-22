@@ -168,6 +168,7 @@ class DecoderWithAttention(nn.Module):
         :param caption_lengths: caption lengths, a tensor of dimension (batch_size, 1)
         :return: scores for vocabulary, sorted encoded captions, decode lengths, weights, sort indices
         """
+        encoded_captions = torch.reshape(encoded_captions, (1, -1))
 
         batch_size = encoder_out.size(0)
         encoder_dim = encoder_out.size(-1)
@@ -205,6 +206,7 @@ class DecoderWithAttention(nn.Module):
                                                                 h[:batch_size_t])
             gate = self.sigmoid(self.f_beta(h[:batch_size_t]))  # gating scalar, (batch_size_t, encoder_dim)
             attention_weighted_encoding = gate * attention_weighted_encoding
+
             h, c = self.decode_step(
                 torch.cat([embeddings[:batch_size_t, t, :], attention_weighted_encoding], dim=1),
                 (h[:batch_size_t], c[:batch_size_t]))  # (batch_size_t, decoder_dim)

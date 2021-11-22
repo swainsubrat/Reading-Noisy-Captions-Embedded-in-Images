@@ -37,7 +37,10 @@ class ImageAndCaptionsDataset(Dataset):
 
         caption = torch.LongTensor([self.captions[idx]])
         caption_length = torch.LongTensor([self.caption_lengths[idx]])
-        return image, caption, caption_length
+        self.cpi = 1
+        all_captions = torch.LongTensor(
+                self.captions[((idx // self.cpi) * self.cpi):(((idx // self.cpi) * self.cpi) + self.cpi)])
+        return image, caption, caption_length, all_captions
  
     def __len__(self):
         return len(self.captions)
