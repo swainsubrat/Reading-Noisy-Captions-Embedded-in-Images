@@ -22,13 +22,14 @@ attention_dim = 512  # dimension of attention linear layers
 decoder_dim = 512  # dimension of decoder RNN
 dropout = 0.5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
+print(f"Using {device} as the accelerator")
 cudnn.benchmark = True  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
 # Training parameters
 start_epoch = 0
-epochs = 120  # number of epochs to train for (if early stopping is not triggered)
+epochs = 10  # number of epochs to train for (if early stopping is not triggered)
 epochs_since_improvement = 0  # keeps track of number of epochs since there's been an improvement in validation BLEU
-batch_size = 1
+batch_size = 32
 workers = 1  # for data-loading; right now, only 1 works with h5py
 encoder_lr = 1e-4  # learning rate for encoder if fine-tuning
 decoder_lr = 4e-4  # learning rate for decoder
@@ -100,15 +101,14 @@ def main():
     #     batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
     ic_dataset = ImageAndCaptionsDataset()
     train_loader = torch.utils.data.DataLoader(
-        ic_dataset, batch_size=batch_size, shuffle=False, num_workers=2,
+        ic_dataset, batch_size=batch_size, shuffle=False, num_workers=workers,
         collate_fn=None)
     
     ic_dataset_val = ImageAndCaptionsDataset(
-        image_path="/content/drive/MyDrive/data/",
-        caption_path="./objects/processed_captions.pkl"
+        caption_path="./objects/processed_captions_val.pkl"
     )
     val_loader = torch.utils.data.DataLoader(
-        ic_dataset_val, batch_size=batch_size, shuffle=False, num_workers=2,
+        ic_dataset_val, batch_size=batch_size, shuffle=False, num_workers=workers,
         collate_fn=None)
 
     # Epochs
