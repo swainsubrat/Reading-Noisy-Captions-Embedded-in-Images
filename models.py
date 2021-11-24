@@ -38,7 +38,7 @@ class Encoder(nn.Module):
         return out
 
     # "TODO": fine_tune was True by default, but set to False, change accordingly
-    def fine_tune(self, fine_tune=False):
+    def fine_tune(self, fine_tune=True):
         """
         Allow or prevent the computation of gradients for convolutional blocks 2 through 4 of the encoder.
 
@@ -47,7 +47,7 @@ class Encoder(nn.Module):
         for p in self.resnet.parameters():
             p.requires_grad = False
         # If fine-tuning, only fine-tune convolutional blocks 2 through 4
-        for c in list(self.resnet.children())[5:]:
+        for c in list(self.resnet.children())[-2:]:
             for p in c.parameters():
                 p.requires_grad = fine_tune
 
