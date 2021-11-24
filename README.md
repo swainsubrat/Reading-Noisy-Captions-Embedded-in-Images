@@ -23,7 +23,7 @@ Hence, the folder structure would be:
 
 urban-fiesta/
   - data/
-  -  train_data/
+       (this is inside the data folder)train_data/
   -  train.py
   -  constants.py
   -  etc....
