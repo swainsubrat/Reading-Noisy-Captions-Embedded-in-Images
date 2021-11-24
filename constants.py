@@ -1,5 +1,5 @@
-base = '/content/drive/MyDrive/data/'
-# base = "data/"
+# base = '/content/drive/MyDrive/data/'
+base = "data/"
 
 image_path = base + "train_data"
 caption_path = base + "Train_text.tsv"

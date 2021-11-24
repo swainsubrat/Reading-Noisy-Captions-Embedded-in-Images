@@ -1,0 +1,6 @@
+pandas
+numpy
+torch
+torchvision
+scikit-image
+nltk
