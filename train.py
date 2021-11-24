@@ -61,7 +61,7 @@ fine_tune_encoder = False  # fine-tune encoder?
 checkpoint = checkpoint_path  # path to checkpoint, None if none
 
 try:
-    checkpoint = torch.load(checkpoint)
+    torch.load(checkpoint)
 except:
     checkpoint = None
 
