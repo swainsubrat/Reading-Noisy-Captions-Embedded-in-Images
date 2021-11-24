@@ -60,6 +60,11 @@ print_freq = 100  # print training/validation stats every __ batches
 fine_tune_encoder = False  # fine-tune encoder?
 checkpoint = checkpoint_path  # path to checkpoint, None if none
 
+try:
+    checkpoint = torch.load(checkpoint)
+except:
+    checkpoint = None
+
 
 def main():
     """
