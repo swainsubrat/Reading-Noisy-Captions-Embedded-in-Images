@@ -22,7 +22,7 @@ put the train_data folder inside the data folder.
 Hence, the folder structure would be:
 
 urban-fiesta/
-  - data/
+  - data/ \
        (this is inside the data folder)train_data/
   -  train.py
   -  constants.py
