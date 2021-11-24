@@ -12,13 +12,29 @@ from customDataset import *
 from utils import *
 from nltk.translate.bleu_score import corpus_bleu
 
-import logging
+from constants import checkpoint_path, BEST_checkpoint_path
 
-logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+import sys
+import logging
+from datetime import date
+today = date.today()
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+output_file_handler = logging.FileHandler(f"logs/{today}.log")
+stdout_handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
+output_file_handler.setFormatter(formatter)
+stdout_handler.setFormatter(formatter)
+logger.addHandler(output_file_handler)
+logger.addHandler(stdout_handler)
+
+# logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG, filename=f'logs/{today}.log', filemode='w')
 
 # Data parameters
 data_folder = '/media/ssd/caption data'  # folder with data files saved by create_input_files.py
-data_name = 'coco_5_cap_per_img_5_min_word_freq'  # base name shared by data files
+data_name = 'resnet_101'  # base name shared by data files
 
 # Model parameters
 emb_dim = 512  # dimension of word embeddings
@@ -26,7 +42,7 @@ attention_dim = 512  # dimension of attention linear layers
 decoder_dim = 512  # dimension of decoder RNN
 dropout = 0.5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
-print(f"Using {device} as the accelerator")
+logger.info(f"Using {device} as the accelerator")
 cudnn.benchmark = True  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
 # Training parameters
@@ -42,7 +58,7 @@ alpha_c = 1.  # regularization parameter for 'doubly stochastic attention', as i
 best_bleu4 = 0.  # BLEU-4 score right now
 print_freq = 100  # print training/validation stats every __ batches
 fine_tune_encoder = False  # fine-tune encoder?
-checkpoint = None  # path to checkpoint, None if none
+checkpoint = checkpoint_path  # path to checkpoint, None if none
 
 
 def main():
@@ -61,6 +77,7 @@ def main():
 
     # Initialize / load checkpoint
     if checkpoint is None:
+        logger.info("Couldn't Find Checkpoint :(")
         decoder = DecoderWithAttention(attention_dim=attention_dim,
                                        embed_dim=emb_dim,
                                        decoder_dim=decoder_dim,
@@ -75,6 +92,7 @@ def main():
 
     else:
         checkpoint = torch.load(checkpoint)
+        logger.info("Found Checkpoint :)")
         start_epoch = checkpoint['epoch'] + 1
         epochs_since_improvement = checkpoint['epochs_since_improvement']
         best_bleu4 = checkpoint['bleu-4']
@@ -134,7 +152,7 @@ def main():
               encoder_optimizer=encoder_optimizer,
               decoder_optimizer=decoder_optimizer,
               epoch=epoch)
-        logging.info(f"Training for Epoch: {epoch+1} Done!!!!")
+        logger.info(f"Training for Epoch: {epoch+1} Done!!!!")
 
         # One epoch's validation
         # "TODO": Subrat: change train_loader -> val_loader
@@ -148,7 +166,7 @@ def main():
         best_bleu4 = max(recent_bleu4, best_bleu4)
         if not is_best:
             epochs_since_improvement += 1
-            logging.info("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
+            logger.info("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
         else:
             epochs_since_improvement = 0
 
@@ -234,7 +252,7 @@ def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_
 
         # Print status
         if i % print_freq == 0:
-            logging.info('Epoch: [{0}][{1}/{2}]\t'
+            logger.info('Epoch: [{0}][{1}/{2}]\t'
                         'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                         'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
@@ -307,7 +325,7 @@ def validate(val_loader, encoder, decoder, criterion):
             start = time.time()
 
             if i % print_freq == 0:
-                logging.info('Validation: [{0}/{1}]\t'
+                logger.info('Validation: [{0}/{1}]\t'
                             'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                             'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                             'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})\t'.format(i, len(val_loader), batch_time=batch_time,
@@ -340,7 +358,7 @@ def validate(val_loader, encoder, decoder, criterion):
         # Calculate BLEU-4 scores
         bleu4 = corpus_bleu(references, hypotheses)
 
-        logging.info(
+        logger.info(
                     '\n * LOSS - {loss.avg:.3f}, TOP-5 ACCURACY - {top5.avg:.3f}, BLEU-4 - {bleu}\n'.format(
                         loss=losses,
                         top5=top5accs,

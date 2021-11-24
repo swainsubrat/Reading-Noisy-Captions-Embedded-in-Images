@@ -1,0 +1,3 @@
+2021-11-24 04:54:40,100 - INFO: Using cuda as the accelerator
+2021-11-24 04:54:59,827 - INFO: Found Checkpoint :)
+2021-11-24 04:55:19,188 - INFO: Epoch: [1][0/1407]	Batch Time 19.300 (19.300)	Data Load Time 16.418 (16.418)	Loss 4.4025 (4.4025)	Top-5 Accuracy 61.806 (61.806)
