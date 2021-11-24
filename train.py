@@ -12,6 +12,10 @@ from customDataset import *
 from utils import *
 from nltk.translate.bleu_score import corpus_bleu
 
+import logging
+
+logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+
 # Data parameters
 data_folder = '/media/ssd/caption data'  # folder with data files saved by create_input_files.py
 data_name = 'coco_5_cap_per_img_5_min_word_freq'  # base name shared by data files
@@ -130,7 +134,7 @@ def main():
               encoder_optimizer=encoder_optimizer,
               decoder_optimizer=decoder_optimizer,
               epoch=epoch)
-        print(f"Training for Epoch: {epoch+1} Done!!!!")
+        logging.info(f"Training for Epoch: {epoch+1} Done!!!!")
 
         # One epoch's validation
         # "TODO": Subrat: change train_loader -> val_loader
@@ -144,7 +148,7 @@ def main():
         best_bleu4 = max(recent_bleu4, best_bleu4)
         if not is_best:
             epochs_since_improvement += 1
-            print("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
+            logging.info("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
         else:
             epochs_since_improvement = 0
 
@@ -230,14 +234,14 @@ def train(train_loader, encoder, decoder, criterion, encoder_optimizer, decoder_
 
         # Print status
         if i % print_freq == 0:
-            print('Epoch: [{0}][{1}/{2}]\t'
-                  'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, i, len(train_loader),
-                                                                          batch_time=batch_time,
-                                                                          data_time=data_time, loss=losses,
-                                                                          top5=top5accs))
+            logging.info('Epoch: [{0}][{1}/{2}]\t'
+                        'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                        'Data Load Time {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                        'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})'.format(epoch, i, len(train_loader),
+                                                                                batch_time=batch_time,
+                                                                                data_time=data_time, loss=losses,
+                                                                                top5=top5accs))
 
 
 def validate(val_loader, encoder, decoder, criterion):
@@ -303,11 +307,11 @@ def validate(val_loader, encoder, decoder, criterion):
             start = time.time()
 
             if i % print_freq == 0:
-                print('Validation: [{0}/{1}]\t'
-                      'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})\t'.format(i, len(val_loader), batch_time=batch_time,
-                                                                                loss=losses, top5=top5accs))
+                logging.info('Validation: [{0}/{1}]\t'
+                            'Batch Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                            'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                            'Top-5 Accuracy {top5.val:.3f} ({top5.avg:.3f})\t'.format(i, len(val_loader), batch_time=batch_time,
+                                                                                        loss=losses, top5=top5accs))
 
             # Store references (true captions), and hypothesis (prediction) for each image
             # If for n images, we have n hypotheses, and references a, b, c... for each image, we need -
@@ -336,11 +340,11 @@ def validate(val_loader, encoder, decoder, criterion):
         # Calculate BLEU-4 scores
         bleu4 = corpus_bleu(references, hypotheses)
 
-        print(
-            '\n * LOSS - {loss.avg:.3f}, TOP-5 ACCURACY - {top5.avg:.3f}, BLEU-4 - {bleu}\n'.format(
-                loss=losses,
-                top5=top5accs,
-                bleu=bleu4))
+        logging.info(
+                    '\n * LOSS - {loss.avg:.3f}, TOP-5 ACCURACY - {top5.avg:.3f}, BLEU-4 - {bleu}\n'.format(
+                        loss=losses,
+                        top5=top5accs,
+                        bleu=bleu4))
 
     return bleu4
 
