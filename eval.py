@@ -10,6 +10,8 @@ import skimage.transform
 import argparse
 # from scipy.misc import imread, imresize
 from PIL import Image
+from torchvision import transforms as T
+from skimage import transform
 
 from skimage.io import imread
 from skimage.transform import resize
@@ -32,19 +34,27 @@ def caption_image_beam_search(encoder, decoder, image_path, word_map, beam_size=
     k = beam_size
     vocab_size = len(word_map)
 
-    # Read image and process
-    img = imread(image_path)
-    if len(img.shape) == 2:
-        img = img[:, :, np.newaxis]
-        img = np.concatenate([img, img, img], axis=2)
-    img = resize(img, (256, 256))
-    img = img.transpose(2, 0, 1)
-    img = img / 255.
-    img = torch.FloatTensor(img).to(device)
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-    transform = transforms.Compose([normalize])
-    image = transform(img)  # (3, 256, 256)
+    # # Read image and process
+    # img = imread(image_path)
+    # if len(img.shape) == 2:
+    #     img = img[:, :, np.newaxis]
+    #     img = np.concatenate([img, img, img], axis=2)
+    # img = resize(img, (256, 256))
+    # img = img.transpose(2, 0, 1)
+    # img = img / 255.
+    # img = torch.FloatTensor(img).to(device)
+    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+    #                                  std=[0.229, 0.224, 0.225])
+    # transform = transforms.Compose([normalize])
+    # image = transform(img)  # (3, 256, 256)
+
+    # image_path = os.path.join(image_path)
+    image = Image.open(image_path).convert("RGB")
+    image = np.array(image)
+    image = transform.resize(image, (256, 256))
+    image = T.ToTensor()(image)
+    image = image.float().to(device)
+
 
     # Encode
     image = image.unsqueeze(0)  # (1, 3, 256, 256)
