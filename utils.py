@@ -106,7 +106,7 @@ def save_checkpoint(data_name, epoch, epochs_since_improvement, encoder, decoder
              'encoder_optimizer': encoder_optimizer,
              'decoder_optimizer': decoder_optimizer}
 
-    filename1 = 'checkpoint_' + data_name + '.pth.tar'
+    filename1 = data_name + '.pth.tar'
     filename2 = 'BEST_' + filename1
 
     torch.save(state, base + filename1)

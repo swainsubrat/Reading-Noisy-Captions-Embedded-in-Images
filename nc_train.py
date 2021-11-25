@@ -1,28 +1,29 @@
-import json
 import time
 import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
-import torchvision.transforms as transforms
+
 from torch import nn
 from torch.nn.utils.rnn import pack_padded_sequence
-from models import Encoder, DecoderWithAttention
-# from datasets import *
+from models import DecoderWithAttention
+from nc_models import Encoder
+
 from customDataset import *
 from utils import *
 from nltk.translate.bleu_score import corpus_bleu
 
-from constants import checkpoint_path, BEST_checkpoint_path
+from constants import checkpoint_path
 
 import sys
 import logging
 from datetime import date
 today = date.today()
 
+# Logging
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-output_file_handler = logging.FileHandler(f"logs/{today}.log")
+output_file_handler = logging.FileHandler(f"logs/nc_{today}.log")
 stdout_handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
 output_file_handler.setFormatter(formatter)
@@ -30,11 +31,8 @@ stdout_handler.setFormatter(formatter)
 logger.addHandler(output_file_handler)
 logger.addHandler(stdout_handler)
 
-# logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG, filename=f'logs/{today}.log', filemode='w')
-
 # Data parameters
-data_folder = '/media/ssd/caption data'  # folder with data files saved by create_input_files.py
-data_name = 'resnet_101'  # base name shared by data files
+data_name = 'resnet_101'  # name used for saving pkl file
 
 # Model parameters
 emb_dim = 512  # dimension of word embeddings
@@ -49,7 +47,7 @@ cudnn.benchmark = True  # set to true only if inputs to model are fixed size; ot
 start_epoch = 0
 epochs = 10  # number of epochs to train for (if early stopping is not triggered)
 epochs_since_improvement = 0  # keeps track of number of epochs since there's been an improvement in validation BLEU
-batch_size = 32
+batch_size = 2
 workers = 1  # for data-loading; right now, only 1 works with h5py
 encoder_lr = 1e-4  # learning rate for encoder if fine-tuning
 decoder_lr = 4e-4  # learning rate for decoder
@@ -57,7 +55,7 @@ grad_clip = 5.  # clip gradients at an absolute value of
 alpha_c = 1.  # regularization parameter for 'doubly stochastic attention', as in the paper
 best_bleu4 = 0.  # BLEU-4 score right now
 print_freq = 100  # print training/validation stats every __ batches
-fine_tune_encoder = True  # fine-tune encoder?
+fine_tune_encoder = False  # fine-tune encoder?
 checkpoint = checkpoint_path  # path to checkpoint, None if none
 
 try:
@@ -73,10 +71,6 @@ def main():
 
     global best_bleu4, epochs_since_improvement, checkpoint, start_epoch, fine_tune_encoder, data_name, word_map
 
-    # Read word map
-    # word_map_file = os.path.join(data_folder, 'WORDMAP_' + data_name + '.json')
-    # with open(word_map_file, 'r') as j:
-    #     word_map = json.load(j)
     _dict = load("./objects/processed_captions.pkl")
     word_map = _dict["word_map"]
 
@@ -117,15 +111,6 @@ def main():
     # Loss function
     criterion = nn.CrossEntropyLoss().to(device)
 
-    # Custom dataloaders
-    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-    #                                  std=[0.229, 0.224, 0.225])
-    # train_loader = torch.utils.data.DataLoader(
-    #     CaptionDataset(data_folder, data_name, 'TRAIN', transform=transforms.Compose([normalize])),
-    #     batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-    # val_loader = torch.utils.data.DataLoader(
-    #     CaptionDataset(data_folder, data_name, 'VAL', transform=transforms.Compose([normalize])),
-    #     batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
     ic_dataset = ImageAndCaptionsDataset()
     train_loader = torch.utils.data.DataLoader(
         ic_dataset, batch_size=batch_size, shuffle=False, num_workers=workers,
