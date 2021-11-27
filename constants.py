@@ -2,7 +2,7 @@ import yaml
 from datetime import date
 
 today = date.today()
-with open("./configs/vgg16.yml") as file:
+with open("./configs/resnet50.yml") as file:
     config = yaml.load(file, yaml.SafeLoader)
 
 # Model parameters

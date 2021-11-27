@@ -6,7 +6,7 @@ import torch.utils.data
 import torch.backends.cudnn as cudnn
 
 from torch import nn
-from nltk.translate.bleu_score import corpus_bleu
+from nltk.translate.bleu_score import corpus_bleu, sentence_bleu
 from torch.nn.utils.rnn import pack_padded_sequence
 
 from utils import *
@@ -50,10 +50,11 @@ def main():
     Training and validation.
     """
 
-    global best_bleu4, best_bleu1, epochs_since_improvement, checkpoint_path, start_epoch, fine_tune_encoder, model, word_map
+    global best_bleu4, best_bleu1, epochs_since_improvement, checkpoint_path, start_epoch, fine_tune_encoder, model, word_map, rev_word_map
 
-    _dict = load("./objects/processed_captions.pkl")
+    _dict = load("./objects/processed_captions_training.pkl")
     word_map = _dict["word_map"]
+    rev_word_map = {v: k for k, v in word_map.items()}
 
     if checkpoint_path is None:
         logger.info("Couldn't Find Checkpoint :(")
@@ -97,7 +98,7 @@ def main():
         collate_fn=None)
     
     ic_dataset_val = ImageAndCaptionsDataset(
-        caption_path="./objects/processed_captions_val.pkl"
+        caption_path="./objects/processed_captions_validation.pkl"
     )
     val_loader = torch.utils.data.DataLoader(
         ic_dataset_val, batch_size=batch_size, shuffle=False, num_workers=workers,
@@ -329,16 +330,31 @@ def validate(val_loader, encoder, decoder, criterion):
 
         # Calculate BLEU-4 scores
         bleu4 = corpus_bleu(references, hypotheses)
-        bleu1 = corpus_bleu(references, hypotheses, weights=(1, 0, 0, 0))
+        # sblue = sentence_bleu()
+
+        ref_sentences = []
+        for item in references:
+            ref = item[0]
+            words = [ rev_word_map[word] for word in ref ]
+            sentence = list(" ".join(words))
+            ref_sentences.append(sentence)
+
+        hyp_sentenses = []
+        for item in hypotheses:
+            words = [ rev_word_map[word] for word in item ]
+            sentence = list(" ".join(words))
+            hyp_sentenses.append(sentence)
+        
+        score = np.mean([sentence_bleu([list(ref_sentences[i])], list(hyp_sentenses[i])) for i in range(len(hyp_sentenses))])
 
         logger.info(
-                    '\n * LOSS - {loss.avg:.3f}, TOP-5 ACCURACY - {top5.avg:.3f}, BLEU-4 - {bleu}, BLEU-1: {bleu1}\n'.format(
+                    '\n * LOSS - {loss.avg:.3f}, TOP-5 ACCURACY - {top5.avg:.3f}, BLEU-4 - {bleu}, BLEU-Char: {bleu1}\n'.format(
                         loss=losses,
                         top5=top5accs,
                         bleu=bleu4,
-                        bleu1=bleu1))
+                        bleu1=score))
 
-    return bleu4, bleu1
+    return bleu4, score
 
 
 if __name__ == '__main__':

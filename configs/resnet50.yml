@@ -1,0 +1,25 @@
+model: resnet50
+
+#########################
+# Processing Parameters #
+#########################
+min_word_freq: 1
+
+#########################
+# Model Parameters      #
+#########################
+embedding_dim: 512 # dimension of word embeddings
+attention_dim: 512 # dimension of attention linear layers
+decoder_dim  : 512 # dimension of decoder LSTM
+dropout      : .5 
+
+#########################
+# Running Parameters    #
+#########################
+epochs    : 40
+workers   : 2
+batch_size: 128
+encoder_lr: 0.0001
+decoder_lr: 0.0004
+grad_clip : 5.
+alpha_c   : 1.

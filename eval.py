@@ -230,7 +230,7 @@ if __name__ == '__main__':
     except:
         from utils import load
 
-        _dict = load("./objects/processed_captions.pkl")
+        _dict = load("./objects/processed_captions_training.pkl")
         word_map = _dict["word_map"]
 
     rev_word_map = {v: k for k, v in word_map.items()}  # ix2word

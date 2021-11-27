@@ -18,7 +18,7 @@ class Encoder(nn.Module):
         if model == "resnet101":
             resnet = torchvision.models.resnet101(pretrained=True)  # pretrained ImageNet ResNet-101
         elif model == "resnet50":
-            resnet = torchvision.models.resnet50(pretrained=True)  # pretrained ImageNet ResNet-101
+            resnet = torchvision.models.resnet50(pretrained=True)  # pretrained ImageNet ResNet-50
         else:
             resnet = torchvision.models.vgg16(pretrained=True)
 
@@ -52,7 +52,7 @@ class Encoder(nn.Module):
         for p in self.resnet.parameters():
             p.requires_grad = False
         # If fine-tuning, only fine-tune convolutional blocks 2 through 4
-        for c in list(self.resnet.children())[-2:]:
+        for c in list(self.resnet.children())[5:]:
             for p in c.parameters():
                 p.requires_grad = fine_tune
 

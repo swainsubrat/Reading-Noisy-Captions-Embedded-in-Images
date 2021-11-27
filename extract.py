@@ -5,7 +5,7 @@ import pandas as pd
 from utils import load
 
 
-_dict = load("./objects/processed_captions.pkl")
+_dict = load("./objects/processed_captions_training.pkl")
 word_map = _dict["word_map"]
 rev_word_map = {v: k for k, v in word_map.items()}  # idx2word
 
@@ -18,7 +18,7 @@ dirs = sorted(dirs, key = lambda x: (len (x), x))
 
 for dir in dirs:
 
-    length = np.random.randint(8, 10)
+    length = np.random.randint(6, 10)
 
     caption = ""
     for len in range(length):
@@ -30,9 +30,9 @@ for dir in dirs:
             caption = word
     
     submission.append([
-        dir, caption
+        "test_data/" + dir, caption
     ])
-
+from pprint import pprint
+# pprint(submission)
 df = pd.DataFrame(submission)
-# print(df)
-df.to_csv("nc_submission.tsv", sep="\t")
+df.to_csv("submission.csv", sep="\t", index=False, header=None)

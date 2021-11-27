@@ -71,7 +71,7 @@ def main():
 
     global best_bleu4, epochs_since_improvement, checkpoint, start_epoch, fine_tune_encoder, data_name, word_map
 
-    _dict = load("./objects/processed_captions.pkl")
+    _dict = load("./objects/processed_captions_training.pkl")
     word_map = _dict["word_map"]
 
     # Initialize / load checkpoint
@@ -117,7 +117,7 @@ def main():
         collate_fn=None)
     
     ic_dataset_val = ImageAndCaptionsDataset(
-        caption_path="./objects/processed_captions_val.pkl"
+        caption_path="./objects/processed_captions_validation.pkl"
     )
     val_loader = torch.utils.data.DataLoader(
         ic_dataset_val, batch_size=batch_size, shuffle=False, num_workers=workers,
