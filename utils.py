@@ -16,7 +16,6 @@ def get_word_map(captions: pd.Series) -> Tuple:
     max_caption_length = 0
     caption_lengths=[]
 
-    #TODO: Check for: hey, you -> "hey," "you"
     for cap in captions:
 
         words = cap.split(' ')
@@ -109,10 +108,10 @@ def save_checkpoint(data_name, epoch, epochs_since_improvement, encoder, decoder
     filename1 = data_name + '.pth.tar'
     filename2 = 'BEST_' + filename1
 
-    torch.save(state, base + filename1)
+    torch.save(state, "data/" + filename1)
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
     if is_best:
-        torch.save(state, base + filename2)
+        torch.save(state, "data/" + filename2)
 class AverageMeter(object):
     """
     Keeps track of most recent, average, sum, and count of a metric.
@@ -161,9 +160,14 @@ def accuracy(scores, targets, k):
     return correct_total.item() * (100.0 / batch_size)
 
 if __name__ == "__main__":
-    df: pd.DataFrame    = pd.read_csv(caption_path ,names=["filenames", "captions"], sep='\t', header=None).head(45000)
-    captions: pd.Series = df["captions"]
-    image_filenames     = df["filenames"].to_list()
+    df: pd.DataFrame    = pd.read_csv(caption_path ,names=["filenames", "captions"], sep='\t', header=None)
+
+    msk = np.random.rand(len(df)) < 0.9
+    df_train = df[msk]
+    df_val = df[~msk]
+
+    captions: pd.Series = df_train["captions"]
+    image_filenames     = df_train["filenames"].to_list()
 
     max_caption_length, caption_lengths, word_map = get_word_map(captions)
     # padded_captions = pad_and_append(captions, max_caption_length)
@@ -177,4 +181,23 @@ if __name__ == "__main__":
         "image_filenames": image_filenames
     }
 
-    save(_dict, "./objects/processed_captions.pkl")
+    save(_dict, "./objects/processed_captions_training.pkl")
+
+    captions: pd.Series = df_val["captions"]
+    image_filenames     = df_val["filenames"].to_list()
+
+    max_caption_length, caption_lengths, word_map = get_word_map(captions)
+    # padded_captions = pad_and_append(captions, max_caption_length)
+    encoded_caption = encoded_captions(captions, caption_lengths, word_map, max_caption_length)
+
+    _dict = {
+        "max_caption_length": max_caption_length,
+        "caption_lengths": caption_lengths,
+        "word_map": word_map,
+        "captions": encoded_caption,
+        "image_filenames": image_filenames
+    }
+
+    save(_dict, "./objects/processed_captions_validation.pkl")
+
+    print(df_train.shape, df_val.shape)

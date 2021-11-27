@@ -10,11 +10,10 @@ from PIL import Image
 from skimage import transform
 
 from utils import load
-from constants import base
 
 class ImageAndCaptionsDataset(Dataset):
     # caption_path is the processed caption path 
-    def __init__(self, image_path=base, caption_path="./objects/processed_captions.pkl", transform=None):
+    def __init__(self, image_path="data/", caption_path="./objects/processed_captions.pkl", transform=None):
         super(ImageAndCaptionsDataset, self).__init__()
         self.transform = transform
         self.image_path=image_path

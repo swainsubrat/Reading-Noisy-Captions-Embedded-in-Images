@@ -1,0 +1,11 @@
+2021-11-27 12:35:36,341 - INFO: Using cpu as the accelerator
+2021-11-27 12:35:36,373 - INFO: Couldn't Find Checkpoint :(
+2021-11-27 12:35:53,535 - INFO: Epoch: [0][0/1407]	Batch Time 16.194 (16.194)	Data Load Time 0.989 (0.989)	Loss 8.5271 (8.5271)	Top-5 Accuracy 0.694 (0.694)
+2021-11-27 12:36:53,109 - INFO: Using cpu as the accelerator
+2021-11-27 12:36:53,149 - INFO: Couldn't Find Checkpoint :(
+2021-11-27 12:36:55,071 - INFO: Epoch: [0][0/45000]	Batch Time 0.980 (0.980)	Data Load Time 0.105 (0.105)	Loss 8.4136 (8.4136)	Top-5 Accuracy 0.000 (0.000)
+2021-11-27 12:38:11,940 - INFO: Using cpu as the accelerator
+2021-11-27 12:38:11,979 - INFO: Couldn't Find Checkpoint :(
+2021-11-27 12:38:13,722 - INFO: Epoch: [0][0/45000]	Batch Time 0.991 (0.991)	Data Load Time 0.092 (0.092)	Loss 8.5390 (8.5390)	Top-5 Accuracy 0.000 (0.000)
+2021-11-27 12:50:45,824 - INFO: Using cpu as the accelerator
+2021-11-27 12:50:45,861 - INFO: Couldn't Find Checkpoint :(

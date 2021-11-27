@@ -1,0 +1,39 @@
+Model: resnet50
+data_path: resnet_50
+log_path: logs/rn_50_{today}.log
+
+epochs: 30
+batch_size: 128
+workers: 2
+
+attention_dim: 256
+decoder_dim: 256
+
+checkpoint_path: data/resnet_50.pth.tar
+BEST_checkpoint_path = base + "BEST_resnet_50.pth.tar"
+
+########
+CUSTOM
+########
+Encoder: VGG19 Modified
+Decoder: Same as Competitive
+
+emb_dim = 512  # dimension of word embeddings
+attention_dim = 512  # dimension of attention linear layers
+decoder_dim = 512 # dimension of decoder RNN
+
+batch_size = 64
+epochs = 30
+workers = 2
+
+########
+vgg16 with different learning rate updation
+########
+Scaling?
+Linear at end of encoder?(Ask in the internet)
+BLEU-4 or BLEU-1?
+use all words or skip?
+Note: we're not using a flatten layer, just a view fn is used to
+flatten the image before feeding it to the encoder
+Adaptive learning rate? instead of %8 learning rate?
+learning rate of 0.1?

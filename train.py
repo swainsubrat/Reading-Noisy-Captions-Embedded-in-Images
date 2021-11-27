@@ -1,69 +1,48 @@
-import json
+import sys
 import time
-import torch.backends.cudnn as cudnn
+import logging
 import torch.optim
 import torch.utils.data
-import torchvision.transforms as transforms
+import torch.backends.cudnn as cudnn
+
 from torch import nn
-from torch.nn.utils.rnn import pack_padded_sequence
-from models import Encoder, DecoderWithAttention
-# from datasets import *
-from customDataset import *
-from utils import *
 from nltk.translate.bleu_score import corpus_bleu
+from torch.nn.utils.rnn import pack_padded_sequence
 
-from constants import checkpoint_path, BEST_checkpoint_path
+from utils import *
+from constants import *
+from customDataset import *
+from models import Encoder, DecoderWithAttention
 
-import sys
-import logging
-from datetime import date
-today = date.today()
 
+# Setting up logger
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-output_file_handler = logging.FileHandler(f"logs/{today}.log")
-stdout_handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
+output_file_handler = logging.FileHandler(log_file_path)
+stdout_handler      = logging.StreamHandler(sys.stdout)
+formatter           = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s')
 output_file_handler.setFormatter(formatter)
 stdout_handler.setFormatter(formatter)
 logger.addHandler(output_file_handler)
 logger.addHandler(stdout_handler)
 
-# logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG, filename=f'logs/{today}.log', filemode='w')
-
-# Data parameters
-data_folder = '/media/ssd/caption data'  # folder with data files saved by create_input_files.py
-data_name = 'resnet_101'  # base name shared by data files
-
-# Model parameters
-emb_dim = 512  # dimension of word embeddings
-attention_dim = 512  # dimension of attention linear layers
-decoder_dim = 512  # dimension of decoder RNN
-dropout = 0.5
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # sets device for model and PyTorch tensors
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+cudnn.benchmark = True
 logger.info(f"Using {device} as the accelerator")
-cudnn.benchmark = True  # set to true only if inputs to model are fixed size; otherwise lot of computational overhead
 
 # Training parameters
 start_epoch = 0
-epochs = 10  # number of epochs to train for (if early stopping is not triggered)
-epochs_since_improvement = 0  # keeps track of number of epochs since there's been an improvement in validation BLEU
-batch_size = 32
-workers = 1  # for data-loading; right now, only 1 works with h5py
-encoder_lr = 1e-4  # learning rate for encoder if fine-tuning
-decoder_lr = 4e-4  # learning rate for decoder
-grad_clip = 5.  # clip gradients at an absolute value of
-alpha_c = 1.  # regularization parameter for 'doubly stochastic attention', as in the paper
-best_bleu4 = 0.  # BLEU-4 score right now
-print_freq = 100  # print training/validation stats every __ batches
-fine_tune_encoder = True  # fine-tune encoder?
-checkpoint = checkpoint_path  # path to checkpoint, None if none
+epochs_since_improvement = 0
+best_bleu4 = 0.
+best_bleu1 = 0.
+print_freq = 100
+fine_tune_encoder = True
 
 try:
-    torch.load(checkpoint)
+    torch.load(checkpoint_path)
 except:
-    checkpoint = None
+    checkpoint_path = None
 
 
 def main():
@@ -71,17 +50,12 @@ def main():
     Training and validation.
     """
 
-    global best_bleu4, epochs_since_improvement, checkpoint, start_epoch, fine_tune_encoder, data_name, word_map
+    global best_bleu4, best_bleu1, epochs_since_improvement, checkpoint_path, start_epoch, fine_tune_encoder, model, word_map
 
-    # Read word map
-    # word_map_file = os.path.join(data_folder, 'WORDMAP_' + data_name + '.json')
-    # with open(word_map_file, 'r') as j:
-    #     word_map = json.load(j)
     _dict = load("./objects/processed_captions.pkl")
     word_map = _dict["word_map"]
 
-    # Initialize / load checkpoint
-    if checkpoint is None:
+    if checkpoint_path is None:
         logger.info("Couldn't Find Checkpoint :(")
         decoder = DecoderWithAttention(attention_dim=attention_dim,
                                        embed_dim=emb_dim,
@@ -96,7 +70,7 @@ def main():
                                              lr=encoder_lr) if fine_tune_encoder else None
 
     else:
-        checkpoint = torch.load(checkpoint)
+        checkpoint = torch.load(checkpoint_path)
         logger.info("Found Checkpoint :)")
         start_epoch = checkpoint['epoch'] + 1
         epochs_since_improvement = checkpoint['epochs_since_improvement']
@@ -117,13 +91,6 @@ def main():
     # Loss function
     criterion = nn.CrossEntropyLoss().to(device)
 
-    # Custom dataloaders
-    # train_loader = torch.utils.data.DataLoader(
-    #     CaptionDataset(data_folder, data_name, 'TRAIN', transform=transforms.Compose([normalize])),
-    #     batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
-    # val_loader = torch.utils.data.DataLoader(
-    #     CaptionDataset(data_folder, data_name, 'VAL', transform=transforms.Compose([normalize])),
-    #     batch_size=batch_size, shuffle=True, num_workers=workers, pin_memory=True)
     ic_dataset = ImageAndCaptionsDataset()
     train_loader = torch.utils.data.DataLoader(
         ic_dataset, batch_size=batch_size, shuffle=False, num_workers=workers,
@@ -157,24 +124,26 @@ def main():
               epoch=epoch)
         logger.info(f"Training for Epoch: {epoch+1} Done!!!!")
 
-        # One epoch's validation
-        # "TODO": Subrat: change train_loader -> val_loader
-        recent_bleu4 = validate(val_loader=val_loader,
-                                encoder=encoder,
-                                decoder=decoder,
-                                criterion=criterion)
+        recent_bleu4, recent_bleu1 = validate(val_loader=val_loader,
+                                              encoder=encoder,
+                                              decoder=decoder,
+                                              criterion=criterion)
 
         # Check if there was an improvement
-        is_best = recent_bleu4 > best_bleu4
+        is_best  = recent_bleu4 > best_bleu4
+        is_best1 = recent_bleu1 > best_bleu1
+
         best_bleu4 = max(recent_bleu4, best_bleu4)
-        if not is_best:
+        best_bleu1 = max(recent_bleu1, best_bleu1)
+
+        if not is_best1:
             epochs_since_improvement += 1
             logger.info("\nEpochs since last improvement: %d\n" % (epochs_since_improvement,))
         else:
             epochs_since_improvement = 0
 
         # Save checkpoint
-        save_checkpoint(data_name, epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer,
+        save_checkpoint(model, epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer,
                         decoder_optimizer, recent_bleu4, is_best)
 
 
@@ -273,7 +242,7 @@ def validate(val_loader, encoder, decoder, criterion):
     :param encoder: encoder model
     :param decoder: decoder model
     :param criterion: loss layer
-    :return: BLEU-4 score
+    :return: BLEU-4 and BLEU-1 scores
     """
     decoder.eval()  # eval mode (no dropout or batchnorm)
     if encoder is not None:
@@ -360,14 +329,16 @@ def validate(val_loader, encoder, decoder, criterion):
 
         # Calculate BLEU-4 scores
         bleu4 = corpus_bleu(references, hypotheses)
+        bleu1 = corpus_bleu(references, hypotheses, weights=(1, 0, 0, 0))
 
         logger.info(
-                    '\n * LOSS - {loss.avg:.3f}, TOP-5 ACCURACY - {top5.avg:.3f}, BLEU-4 - {bleu}\n'.format(
+                    '\n * LOSS - {loss.avg:.3f}, TOP-5 ACCURACY - {top5.avg:.3f}, BLEU-4 - {bleu}, BLEU-1: {bleu1}\n'.format(
                         loss=losses,
                         top5=top5accs,
-                        bleu=bleu4))
+                        bleu=bleu4,
+                        bleu1=bleu1))
 
-    return bleu4
+    return bleu4, bleu1
 
 
 if __name__ == '__main__':

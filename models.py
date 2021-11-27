@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torchvision
 
+from constants import model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -14,9 +15,13 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.enc_image_size = encoded_image_size
 
-        resnet = torchvision.models.resnet101(pretrained=True)  # pretrained ImageNet ResNet-101
+        if model == "resnet101":
+            resnet = torchvision.models.resnet101(pretrained=True)  # pretrained ImageNet ResNet-101
+        elif model == "resnet50":
+            resnet = torchvision.models.resnet50(pretrained=True)  # pretrained ImageNet ResNet-101
+        else:
+            resnet = torchvision.models.vgg16(pretrained=True)
 
-        # Remove linear and pool layers (since we're not doing classification)
         modules = list(resnet.children())[:-2]
         self.resnet = nn.Sequential(*modules)
 
@@ -176,6 +181,7 @@ class DecoderWithAttention(nn.Module):
 
         # Flatten image
         encoder_out = encoder_out.view(batch_size, -1, encoder_dim)  # (batch_size, num_pixels, encoder_dim)
+        # 14 * 14 * 2048 -> 1 * 2048
         num_pixels = encoder_out.size(1)
 
         # Sort input data by decreasing lengths; why? apparent below
