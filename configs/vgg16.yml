@@ -1,4 +1,4 @@
-model: resnet50
+model: vgg16
 
 #########################
 # Processing Parameters #

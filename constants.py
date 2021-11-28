@@ -32,6 +32,3 @@ checkpoint_path      = f"./data/{model}.pth.tar"
 BEST_checkpoint_path = f"./data/BEST_{model}.pth.tar"
 
 min_word_freq = config["min_word_freq"]
-"""
-[1]: Shuffle validation set
-"""

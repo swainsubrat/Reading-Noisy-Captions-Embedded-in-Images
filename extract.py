@@ -18,11 +18,11 @@ dirs = sorted(dirs, key = lambda x: (len (x), x))
 
 for dir in dirs:
 
-    length = np.random.randint(6, 10)
+    length = np.random.randint(5, 7)
 
     caption = ""
     for len in range(length):
-        idx = np.random.randint(1, 1990)
+        idx = np.random.randint(1, 1978)
         word = rev_word_map[idx]
         if caption:
             caption = caption + " " + word

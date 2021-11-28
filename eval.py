@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import skimage.transform
 import argparse
-# from scipy.misc import imread, imresize
+
 from PIL import Image
 from torchvision import transforms as T
 from skimage import transform
@@ -134,7 +134,7 @@ def caption_image_beam_search(encoder, decoder, image_path, word_map, beam_size=
         complete_inds = list(set(range(len(next_word_inds))) - set(incomplete_inds))
 
         # "TODO": change remove below line
-        # complete_inds = incomplete_inds
+        complete_inds = incomplete_inds
         # Set aside complete sequences
         if len(complete_inds) > 0:
             complete_seqs.extend(seqs[complete_inds].tolist())
@@ -157,6 +157,7 @@ def caption_image_beam_search(encoder, decoder, image_path, word_map, beam_size=
         if step > 50:
             break
         step += 1
+    # print(complete_seqs_scores)
     i = complete_seqs_scores.index(max(complete_seqs_scores))
     seq = complete_seqs[i]
     alphas = complete_seqs_alpha[i]
@@ -246,5 +247,5 @@ if __name__ == '__main__':
         words = [rev_word_map[ind] for ind in seq]
         print(words)
 
-    # Visualize caption and attention of best sequence
-    # visualize_att(args.img, seq, alphas, rev_word_map, args.smooth)
+        # Visualize caption and attention of best sequence
+        visualize_att(img_path, seq, alphas, rev_word_map, args.smooth)
