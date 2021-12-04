@@ -73,11 +73,6 @@ def load(path: str) -> None:
     return obj
 
 def clip_gradient(optimizer, grad_clip):
-    """
-    Clips gradients computed during backpropagation to avoid explosion of gradients.
-    :param optimizer: optimizer with the gradients to be clipped
-    :param grad_clip: clip value
-    """
     for group in optimizer.param_groups:
         for param in group['params']:
             if param.grad is not None:
@@ -86,16 +81,7 @@ def clip_gradient(optimizer, grad_clip):
 def save_checkpoint(data_name, epoch, epochs_since_improvement, encoder, decoder, encoder_optimizer, decoder_optimizer,
                     bleu4, is_best):
     """
-    Saves model checkpoint.
-    :param data_name: base name of processed dataset
-    :param epoch: epoch number
-    :param epochs_since_improvement: number of epochs since last improvement in BLEU-4 score
-    :param encoder: encoder model
-    :param decoder: decoder model
-    :param encoder_optimizer: optimizer to update encoder's weights, if fine-tuning
-    :param decoder_optimizer: optimizer to update decoder's weights
-    :param bleu4: validation BLEU-4 score for this epoch
-    :param is_best: is this checkpoint the best so far?
+    Saves model checkpoint
     """
     state = {'epoch': epoch,
              'epochs_since_improvement': epochs_since_improvement,
@@ -114,7 +100,7 @@ def save_checkpoint(data_name, epoch, epochs_since_improvement, encoder, decoder
         torch.save(state, "data/" + filename2)
 class AverageMeter(object):
     """
-    Keeps track of most recent, average, sum, and count of a metric.
+    metric tracking
     """
 
     def __init__(self):
@@ -134,9 +120,7 @@ class AverageMeter(object):
 
 def adjust_learning_rate(optimizer, shrink_factor):
     """
-    Shrinks learning rate by a specified factor.
-    :param optimizer: optimizer whose learning rate must be shrunk.
-    :param shrink_factor: factor in interval (0, 1) to multiply learning rate with.
+    drop learning rate, for each 8th iteration
     """
 
     print("\nDECAYING learning rate.")
@@ -146,13 +130,8 @@ def adjust_learning_rate(optimizer, shrink_factor):
 
 def accuracy(scores, targets, k):
     """
-    Computes top-k accuracy, from predicted and true labels.
-    :param scores: scores from the model
-    :param targets: true labels
-    :param k: k in top-k accuracy
-    :return: top-k accuracy
+    calculate accuracy
     """
-
     batch_size = targets.size(0)
     _, ind = scores.topk(k, 1, True, True)
     correct = ind.eq(targets.view(-1, 1).expand_as(ind))

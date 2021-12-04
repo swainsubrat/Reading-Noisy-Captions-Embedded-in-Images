@@ -1,9 +1,11 @@
 import os
+import pickle
 import numpy as np
 import pandas as pd
+
+
 import torch
 from torch.utils.data import Dataset
-import pickle
 from torchvision import transforms as T
 from PIL import Image
 
@@ -34,10 +36,6 @@ class ImageAndCaptionsDataset(Dataset):
         image = transform.resize(image, (256, 256))
         image = T.ToTensor()(image)
         image = image.float()
-
-        # "TODO": Sweta: what is this self.transform function
-        # if self.transform is not None:
-        #     image = self.transform(image)
 
         caption = torch.LongTensor([self.captions[idx]])
         caption_length = torch.LongTensor([self.caption_lengths[idx]])
