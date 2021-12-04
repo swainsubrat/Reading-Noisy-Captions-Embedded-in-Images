@@ -1,5 +1,5 @@
-from attention import Attention
-from encoder import Encoder
+from .attention import Attention
+from .encoder import Encoder
 
 __all__ = [
     "Attention",
