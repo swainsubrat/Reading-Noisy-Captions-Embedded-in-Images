@@ -37,10 +37,6 @@ class ImageAndCaptionsDataset(Dataset):
         image = T.ToTensor()(image)
         image = image.float()
 
-        # "TODO": Sweta: what is this self.transform function
-        # if self.transform is not None:
-        #     image = self.transform(image)
-
         caption = torch.LongTensor([self.captions[idx]])
         caption_length = torch.LongTensor([self.caption_lengths[idx]])
         self.cpi = 1
